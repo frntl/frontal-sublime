@@ -1,5 +1,6 @@
 import sublime, sublime_plugin, re
 
+settings_file_name = 'Frontal.sublime-settings'
 # see https://forum.sublimetext.com/t/dev-build-3118/21270
 class Frontal(sublime_plugin.ViewEventListener):
     def __init__(self, view):
@@ -7,12 +8,17 @@ class Frontal(sublime_plugin.ViewEventListener):
         self.phantom_set = sublime.PhantomSet(view)
         self.timeout_scheduled = False
         self.needs_update = False
-        settings = sublime.load_settings('Frontal.sublime-settings')
+        settings = sublime.load_settings(settings_file_name)
         self.enabled = settings.get('enabled')
-        print (self.enabled)
-        if self.enabled == False:
+        # print (self.enabled)
+        if settings.get('enabled') == False:
             self.phantom_set.update([])
+            print ('not enabled')
+            return
         PHANTOM_SUPPORT = int(sublime.version()) >= 3118
+        if not PHANTOM_SUPPORT:
+            print ('no Phantom support')
+            return
         self.update_phantoms()
 
     @classmethod
@@ -34,10 +40,13 @@ class Frontal(sublime_plugin.ViewEventListener):
             # line_region = self.view.line(r.a)
             # line = self.view.substr(line_region)
             name = '<div style="background-color:rgba(123,123,123,0.4);">Frontal Slide: ' + str(counter) + '</div>'
+            # sublime.LAYOUT_BELOW
+            # sublime.LAYOUT_BLOCK
+            # https://www.sublimetext.com/docs/3/api_reference.html#sublime.Phantom
             phantoms.append(sublime.Phantom(
             r,
             name,
-            sublime.LAYOUT_BLOCK))
+            sublime.LAYOUT_BELOW))
             counter = counter + 1
 
         self.phantom_set.update(phantoms)
@@ -55,5 +64,17 @@ class Frontal(sublime_plugin.ViewEventListener):
         else:
             sublime.set_timeout(lambda: self.handle_timeout(), 100)
             self.update_phantoms()
+
+# class FrontalToggleCommand(sublime_plugin.TextCommand):
+#     def run(self, edit):
+#         print('toggle')
+#         settings = sublime.load_settings(settings_file_name)
+#         print(settings)
+#         if settings.enabled == True:
+#             settings.enabled = False
+#         else:
+#             settings.enabled = True
+#         sublime.save_settings(settings_file_name)
+
 
 
